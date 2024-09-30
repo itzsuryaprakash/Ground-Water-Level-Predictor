@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groundwater Level Predictor</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            background-color: #ffffff; 
+            color: #000000; 
+        }
+        header, footer {
+            width: 100%;
+            padding: 20px;
+            background-color: #0070c0; 
+            color: #ffffff; 
+            text-align: center;
+            border-bottom: 2px solid #000000;
+        }
+        header h1, footer p {
+            margin: 0;
+        }
+        .logo {
+            max-height: 50px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        header h1 {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .container {
+            display: flex;
+            margin-top: 20px;
+            padding-bottom: 40px;
+            width: 80%; 
+            max-width: 1200px; 
+            background-color: #ffffff; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+        }
+        .sidebar {
+            width: 300px;
+            padding: 20px;
+            background-color: #e0e0e0; 
+            border-right: 2px solid #000000; 
+            display: flex;
+            flex-direction: column;
+        }
+        .map {
+            height: 600px;
+            flex: 1; 
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #000000; 
+        }
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            background-color: #e0e0e0; 
+            color: #000000; 
+            border: 2px solid #0070c0; 
+        }
+        .input-group button {
+            padding: 10px 20px;
+            background-color: #0070c0; 
+            color: #ffffff;
+            border: 2px solid #0070c0; 
+            cursor: pointer;
+        }
+        .input-group button:hover {
+            background-color: #005fa3; 
+        }
+        .prediction-result {
+            margin-top: 20px;
+            color: #000000; 
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="water benders.png" alt="Logo" class="logo">
+        <h1>Water Benders - Groundwater Level Predictor</h1>
+    </header>
+
+    <div class="container">
+        <div class="sidebar">
+            <h2>Predict Groundwater Level</h2>
+            <div class="input-group">
+                <label for="latitude">Latitude:</label>
+                <input type="number" id="latitude" step="any">
+            </div>
+            <div class="input-group">
+                <label for="longitude">Longitude:</label>
+                <input type="number" id="longitude" step="any">
+            </div>
+            <div class="input-group">
+                <button onclick="predict()">Get Prediction</button>
+            </div>
+            <div class="prediction-result">
+                <h2>Prediction Result:</h2>
+                <div id="prediction">-</div>
+            </div>
+        </div>
+        <div id="map" class="map"></div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Water Benders All Rights Reserved.</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        let map = L.map('map').setView([0, 0], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        let marker = L.marker([0, 0]).addTo(map);
+
+        function updateMap(lat, lon) {
+            map.setView([lat, lon], 13);
+            marker.setLatLng([lat, lon]);
+        }
+
+        async function predict() {
+            const latitude = parseFloat(document.getElementById('latitude').value);
+            const longitude = parseFloat(document.getElementById('longitude').value);
+
+            if (isNaN(latitude) || isNaN(longitude)) {
+                alert('Please enter valid latitude and longitude.');
+                return;
+            }
+
+            updateMap(latitude, longitude);
+
+            const response = await fetch('http://127.0.0.1:8000/predict/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ latitude, longitude }),
+            });
+
+            const data = await response.json();
+            document.getElementById('prediction').textContent = data.predicted_water_level.join(', ');
+        }
+    </script>
+</body>
+</html>
